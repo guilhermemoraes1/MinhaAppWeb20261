@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE = "minhaappweb20261"
         VERSION = "latest"
         CONTAINER_NAME = "${DOCKER_IMAGE}-test"
-        APP_PORT = "8080"
+        APP_PORT = "3000"
         WORKSPACE_DIR = "/home/journey/repos/jenkins/jenkins_home/workspace/pipeline-web"
     }
 
