@@ -6,7 +6,7 @@ pipeline {
         VERSION = "latest"
         CONTAINER_NAME = "${DOCKER_IMAGE}-test"
         APP_PORT = "8080"
-        WORKSPACE = "/home/pweb2/Web/gcsi_20252/jenkins/jenkins_home/workspace/reactjs"
+        WORKSPACE_DIR = "${env.WORKSPACE}"
     }
 
     stages {
@@ -18,16 +18,15 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh "docker build -t $DOCKER_IMAGE:$VERSION ."
+                sh "docker build -t ${DOCKER_IMAGE}:${VERSION} ."
             }
         }
 
         stage('Test') {
             steps {
                 sh """
-                    echo 
                     docker run --rm \
-                      -v ${WORKSPACE}:/app \
+                      -v ${WORKSPACE_DIR}:/app \
                       -w /app \
                       node:22-alpine \
                       sh -c "rm -f package-lock.json && npm install --package-lock-only && npm ci && npm run lint && npm test"
@@ -37,7 +36,7 @@ pipeline {
 
         stage('Run') {
             steps {
-                sh "docker run -d --rm --name ${CONTAINER_NAME} -p ${APP_PORT}:80 $DOCKER_IMAGE:$VERSION"
+                sh "docker run -d --rm --name ${CONTAINER_NAME} -p ${APP_PORT}:80 ${DOCKER_IMAGE}:${VERSION}"
             }
         }
 
@@ -69,3 +68,4 @@ pipeline {
             sh "docker rm -f ${CONTAINER_NAME} || true"
         }
     }
+}
