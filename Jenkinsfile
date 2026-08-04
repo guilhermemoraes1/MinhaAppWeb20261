@@ -44,7 +44,7 @@ pipeline {
             steps {
                 sh """
                     for i in 1 2 3 4 5; do
-                        if curl -sf http://localhost:${APP_PORT}/ > /dev/null; then
+                        if docker exec ${CONTAINER_NAME} curl -sf http://localhost/ > /dev/null; then
                             echo "Container respondendo corretamente."
                             exit 0
                         fi
