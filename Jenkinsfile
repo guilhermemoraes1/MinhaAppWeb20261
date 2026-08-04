@@ -6,7 +6,7 @@ pipeline {
         VERSION = "latest"
         CONTAINER_NAME = "${DOCKER_IMAGE}-test"
         APP_PORT = "8080"
-        WORKSPACE_DIR = "${env.WORKSPACE}"
+        WORKSPACE_DIR = "/home/journey/repos/jenkins/jenkins_home/workspace/pipeline-web"
     }
 
     stages {
