@@ -2,41 +2,70 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER  = "guilhermeacademico" 
         DOCKER_IMAGE = "minhaappweb20261"
-        VERSION      = "latest"
-        
-        DOCKER_CREDENTIALS_ID = "dockerhub-credentials1"
+        VERSION = "latest"
+        CONTAINER_NAME = "${DOCKER_IMAGE}-test"
+        APP_PORT = "8080"
+        WORKSPACE = "/home/pweb2/Web/gcsi_20252/jenkins/jenkins_home/workspace/reactjs"
     }
 
     stages {
-        stage('Build Image') {
+        stage('Cleanup') {
             steps {
-                sh "docker build -t ${DOCKER_USER}/${DOCKER_IMAGE}:${VERSION} ."
+                sh "docker rm -f ${CONTAINER_NAME} || true"
             }
         }
 
-        stage('Teste') {
+        stage('Build') {
             steps {
-                echo "Executando a bateria de teste..."
+                sh "docker build -t $DOCKER_IMAGE:$VERSION ."
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh """
+                    echo 
+                    docker run --rm \
+                      -v ${WORKSPACE}:/app \
+                      -w /app \
+                      node:22-alpine \
+                      sh -c "rm -f package-lock.json && npm install --package-lock-only && npm ci && npm run lint && npm test"
+                """
+            }
+        }
+
+        stage('Run') {
+            steps {
+                sh "docker run -d --rm --name ${CONTAINER_NAME} -p ${APP_PORT}:80 $DOCKER_IMAGE:$VERSION"
+            }
+        }
+
+        stage('Smoke Test') {
+            steps {
+                sh """
+                    for i in 1 2 3 4 5; do
+                        if curl -sf http://localhost:${APP_PORT}/ > /dev/null; then
+                            echo "Container respondendo corretamente."
+                            exit 0
+                        fi
+                        sleep 2
+                    done
+                    echo "Smoke test falhou: aplicação não respondeu."
+                    exit 1
+                """
             }
         }
 
         stage('Deploy') {
             steps {
-                echo "Enviando imagem da aplicação para o Docker Hub..."
-                
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", 
-                                                    usernameVariable: 'DOCKER_HUB_USER', 
-                                                    passwordVariable: 'DOCKER_HUB_PASS')]) {
-
-                    sh '''
-                        echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
-                    '''
-                }
-                
-                sh "docker push ${DOCKER_USER}/${DOCKER_IMAGE}:${VERSION}"
+                echo "Enviando imagem da aplicação para Deploy."
             }
         }
     }
-}
+
+    post {
+        always {
+            sh "docker rm -f ${CONTAINER_NAME} || true"
+        }
+    }
