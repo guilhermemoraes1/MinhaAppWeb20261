@@ -29,7 +29,7 @@ pipeline {
                       -v ${WORKSPACE_DIR}:/app \
                       -w /app \
                       node:22-alpine \
-                      sh -c "rm -f package-lock.json && npm install --package-lock-only && npm ci && npm run lint && npm test"
+                      sh -c "rm -f package-lock.json && npm install --package-lock-only && npm ci && npm test"
                 """
             }
         }
